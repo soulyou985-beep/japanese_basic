@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Nihongo Step</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="일본어학습">
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-light: #e0e7ff;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --text-secondary: #64748b;
+            --border: #e2e8f0;
+            --success: #10b981;
+            --danger: #ef4444;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg); color: var(--text); padding-bottom: 85px; }
+        
+        header { background: var(--card-bg); padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; }
+        h1 { font-size: 1.25rem; font-weight: 700; color: var(--primary); }
+        
+        .container { max-width: 600px; margin: 0 auto; padding: 16px; }
+        
+        .tabs { display: flex; background: var(--card-bg); border-radius: 12px; padding: 4px; border: 1px solid var(--border); margin-bottom: 16px; }
+        .tab-btn { flex: 1; padding: 9px; text-align: center; border: none; background: none; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); cursor: pointer; border-radius: 8px; transition: all 0.2s; }
+        .tab-btn.active { background: var(--primary); color: white; }
+        
+        .section { display: none; }
+        .section.active { display: block; }
+        
+        .dash-card { background: var(--card-bg); border-radius: 16px; padding: 20px; border: 1px solid var(--border); margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .dash-card h2 { font-size: 1.05rem; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        
+        .progress-bar { width: 100%; height: 10px; background: var(--border); border-radius: 99px; overflow: hidden; margin: 10px 0; }
+        .progress-fill { height: 100%; background: var(--success); width: 0%; transition: width 0.3s; }
+
+        /* 50음도 그리드 */
+        .kana-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+        .kana-item { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 0; text-align: center; cursor: pointer; }
+        .kana-item:active { transform: scale(0.95); background: var(--primary-light); }
+        .kana-char { font-size: 1.25rem; font-weight: bold; display: block; }
+        .kana-romaji { font-size: 0.75rem; color: var(--text-secondary); }
+        
+        /* 플래시카드 */
+        .flashcard-container { perspective: 1000px; height: 250px; margin-bottom: 16px; }
+        .flashcard { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.5s; cursor: pointer; }
+        .flashcard.flipped { transform: rotateY(180deg); }
+        .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; flex-direction: column; justify-content: center; align-items: center; background: var(--card-bg); border: 1px solid var(--border); border-radius: 16px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); text-align: center; }
+        .card-back { transform: rotateY(180deg); background: var(--primary-light); color: var(--primary); }
+        .card-jp { font-size: 2.3rem; font-weight: bold; margin-bottom: 8px; }
+        .card-sub { font-size: 1rem; color: var(--text-secondary); margin-bottom: 6px; }
+        .card-ko { font-size: 1.35rem; font-weight: 700; color: var(--text); }
+        
+        .btn-group { display: flex; gap: 10px; }
+        .btn { flex: 1; padding: 13px; border: none; border-radius: 12px; font-weight: 600; font-size: 0.95rem; cursor: pointer; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-outline { background: var(--card-bg); border: 1px solid var(--border); color: var(--text); }
+
+        /* 퀴즈 */
+        .quiz-option { width: 100%; text-align: left; padding: 14px 16px; margin-bottom: 10px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; font-size: 1rem; cursor: pointer; transition: all 0.15s; }
+        .quiz-option.correct { background: #d1fae5; border-color: var(--success); color: #065f46; font-weight: bold; }
+        .quiz-option.wrong { background: #fee2e2; border-color: var(--danger); color: #991b1b; }
+        
+        /* 하단 네비게이션바 */
+        nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card-bg); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 8px 0 calc(8px + env(safe-area-inset-bottom)); z-index: 10; }
+        .nav-item { background: none; border: none; display: flex; flex-direction: column; align-items: center; font-size: 0.75rem; color: var(--text-secondary); cursor: pointer; flex: 1; }
+        .nav-item.active { color: var(--primary); font-weight: bold; }
+        .nav-item span.icon { font-size: 1.3rem; margin-bottom: 2px; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🇯🇵 Nihongo Step</h1>
+        <span style="font-size: 0.8rem; color: var(--success); font-weight: 600;">● 오프라인 지원</span>
+    </header>
+
+    <div class="container">
+        <!-- 1. 홈 탭 -->
+        <div id="home-section" class="section active">
+            <div class="dash-card">
+                <h2>나의 암기 진도율 <span id="progress-text" style="color: var(--primary);">0%</span></h2>
+                <div class="progress-bar"><div id="progress-fill" class="progress-fill"></div></div>
+                <p style="font-size: 0.85rem; color: var(--text-secondary);">단어장에서 '외웠어요!'를 누르면 기기에 자동 저장됩니다.</p>
+            </div>
+            
+            <div class="dash-card">
+                <h2>오늘의 회화 표현</h2>
+                <div style="font-size: 1.35rem; font-weight: bold; margin: 8px 0;">ありがとうございます。</div>
+                <div style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 14px;">아리가토우 고자이마스 (대단히 감사합니다.)</div>
+                <button class="btn btn-primary" style="width: 100%;" onclick="speak('ありがとうございます。')">🔊 원어민 발음 듣기</button>
+            </div>
+
+            <div class="dash-card" style="background: #f1f5f9; border: none;">
+                <h2 style="font-size: 0.95rem;">📱 아이폰 앱으로 설치하기</h2>
+                <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5;">
+                    Safari 하단 <b>[공유 버튼]</b> → <b>[홈 화면에 추가]</b>를 누르면 인터넷이 없는 비행기나 지하철에서도 앱처럼 실행됩니다.
+                </p>
+            </div>
+        </div>
+
+        <!-- 2. 50음도 탭 -->
+        <div id="kana-section" class="section">
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchKana('hira', this)">히라가나</button>
+                <button class="tab-btn" onclick="switchKana('kata', this)">가타카나</button>
+            </div>
+            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 10px; text-align: center;">글자를 터치하면 발음이 재생됩니다.</p>
+            <div id="kana-grid" class="kana-grid"></div>
+        </div>
+
+        <!-- 3. 단어장 탭 -->
+        <div id="card-section" class="section">
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchLevel('N5', this)">입문 (N5)</button>
+                <button class="tab-btn" onclick="switchLevel('N4', this)">초급 (N4)</button>
+                <button class="tab-btn" onclick="switchLevel('N3', this)">중급 한자 (N3)</button>
+            </div>
+
+            <div class="flashcard-container" onclick="flipCard()">
+                <div id="flashcard" class="flashcard">
+                    <div class="card-face">
+                        <div id="card-jp" class="card-jp">--</div>
+                        <div id="card-furigana" class="card-sub">--</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 12px;">터치해서 뜻 확인 · 🔊 발음 듣기</div>
+                    </div>
+                    <div class="card-face card-back">
+                        <div id="card-ko" class="card-ko">--</div>
+                        <div id="card-reading" style="font-size: 0.95rem; margin-top: 8px; color: var(--primary);">--</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="btn-group" style="margin-bottom: 10px;">
+                <button class="btn btn-outline" onclick="speakCurrentCard()">🔊 발음 듣기</button>
+            </div>
+            <div class="btn-group">
+                <button class="btn" style="background: #e2e8f0; color: var(--text);" onclick="nextCard(false)">다시 보기</button>
+                <button class="btn btn-success" onclick="nextCard(true)">외웠어요! ✓</button>
+            </div>
+        </div>
+
+        <!-- 4. 실전 퀴즈 탭 -->
+        <div id="quiz-section" class="section">
+            <div class="dash-card">
+                <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 10px;">
+                    <span id="quiz-counter">문제 1 / 5</span>
+                    <span id="quiz-score">점수: 0</span>
+                </div>
+                <div id="quiz-question" style="font-size: 1.3rem; font-weight: bold; margin: 16px 0; text-align: center;">--</div>
+                <div id="quiz-options"></div>
+                <div id="quiz-feedback" style="margin-top: 12px; font-size: 0.9rem; font-weight: 600; text-align: center;"></div>
+                <button id="quiz-next-btn" class="btn btn-primary" style="width: 100%; margin-top: 14px; display: none;" onclick="nextQuiz()">다음 문제 →</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 하단 메뉴 -->
+    <nav>
+        <button class="nav-item active" onclick="changeTab('home', this)"><span class="icon">🏠</span>홈</button>
+        <button class="nav-item" onclick="changeTab('kana', this)"><span class="icon">あ</span>50음도</button>
+        <button class="nav-item" onclick="changeTab('card', this)"><span class="icon">🃏</span>단어장</button>
+        <button class="nav-item" onclick="changeTab('quiz', this)"><span class="icon">✍️</span>퀴즈</button>
+    </nav>
+
+    <script>
+        // 탭 전환
+        function changeTab(tabName, el) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(tabName + '-section').classList.add('active');
+            el.classList.add('active');
+            if(tabName === 'quiz') initQuiz();
+        }
+
+        // 음성 재생 (오프라인 iOS 내장 TTS 지원)
+        function speak(text) {
+            if (!('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'ja-JP';
+            utterance.rate = 0.9;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // 50음도 데이터
+        const kanaData = {
+            hira: [
+                {c:'あ',r:'a'},{c:'い',r:'i'},{c:'う',r:'u'},{c:'え',r:'e'},{c:'お',r:'o'},
+                {c:'か',r:'ka'},{c:'き',r:'ki'},{c:'く',r:'ku'},{c:'け',r:'ke'},{c:'こ',r:'ko'},
+                {c:'さ',r:'sa'},{c:'し',r:'shi'},{c:'す',r:'su'},{c:'せ',r:'se'},{c:'そ',r:'so'},
+                {c:'た',r:'ta'},{c:'ち',r:'chi'},{c:'つ',r:'tsu'},{c:'て',r:'te'},{c:'と',r:'to'},
+                {c:'な',r:'na'},{c:'に',r:'ni'},{c:'ぬ',r:'nu'},{c:'ね',r:'ne'},{c:'の',r:'no'},
+                {c:'は',r:'ha'},{c:'ひ',r:'hi'},{c:'ふ',r:'fu'},{c:'へ',r:'he'},{c:'ほ',r:'ho'},
+                {c:'ま',r:'ma'},{c:'み',r:'mi'},{c:'む',r:'mu'},{c:'め',r:'me'},{c:'も',r:'mo'},
+                {c:'や',r:'ya'},{c:'',r:''},{c:'ゆ',r:'yu'},{c:'',r:''},{c:'よ',r:'yo'},
+                {c:'ら',r:'ra'},{c:'り',r:'ri'},{c:'る',r:'ru'},{c:'れ',r:'re'},{c:'ろ',r:'ro'},
+                {c:'わ',r:'wa'},{c:'',r:''},{c:'を',r:'wo'},{c:'',r:''},{c:'ん',r:'n'}
+            ],
+            kata: [
+                {c:'ア',r:'a'},{c:'イ',r:'i'},{c:'ウ',r:'u'},{c:'エ',r:'e'},{c:'オ',r:'o'},
+                {c:'カ',r:'ka'},{c:'キ',r:'ki'},{c:'ク',r:'ku'},{c:'ケ',r:'ke'},{c:'コ',r:'ko'},
+                {c:'サ',r:'sa'},{c:'シ',r:'shi'},{c:'ス',r:'su'},{c:'セ',r:'se'},{c:'ソ',r:'so'},
+                {c:'タ',r:'ta'},{c:'チ',r:'chi'},{c:'ツ',r:'tsu'},{c:'テ',r:'te'},{c:'ト',r:'to'},
+                {c:'ナ',r:'na'},{c:'ニ',r:'ni'},{c:'ヌ',r:'nu'},{c:'ネ',r:'ne'},{c:'ノ',r:'no'},
+                {c:'ハ',r:'ha'},{c:'ヒ',r:'hi'},{c:'フ',r:'fu'},{c:'ヘ',r:'he'},{c:'ホ',r:'ho'},
+                {c:'マ',r:'ma'},{c:'ミ',r:'mi'},{c:'ム',r:'mu'},{c:'メ',r:'me'},{c:'モ',r:'mo'},
+                {c:'ヤ',r:'ya'},{c:'',r:''},{c:'ユ',r:'yu'},{c:'',r:''},{c:'ヨ',r:'yo'},
+                {c:'ラ',r:'ra'},{c:'リ',r:'ri'},{c:'ル',r:'ru'},{c:'レ',r:'re'},{c:'ロ',r:'ro'},
+                {c:'ワ',r:'wa'},{c:'',r:''},{c:'ヲ',r:'wo'},{c:'',r:''},{c:'ン',r:'n'}
+            ]
+        };
+
+        function renderKana(type) {
+            const grid = document.getElementById('kana-grid');
+            grid.innerHTML = '';
+            kanaData[type].forEach(item => {
+                const div = document.createElement('div');
+                if(!item.c) { grid.appendChild(div); return; }
+                div.className = 'kana-item';
+                div.innerHTML = `<span class="kana-char">${item.c}</span><span class="kana-romaji">${item.r}</span>`;
+                div.onclick = () => speak(item.c);
+                grid.appendChild(div);
+            });
+        }
+
+        function switchKana(type, el) {
+            document.querySelectorAll('#kana-section .tab-btn').forEach(b => b.classList.remove('active'));
+            el.classList.add('active');
+            renderKana(type);
+        }
+
+        // 단계별 단어 및 한자 데이터
+        const vocabDB = {
+            N5: [
+                {id:'n5_1', jp:'食べる', furi:'たべる', ko:'먹다', read:'타베루'},
+                {id:'n5_2', jp:'行く', furi:'いく', ko:'가다', read:'이쿠'},
+                {id:'n5_3', jp:'見る', furi:'みる', ko:'보다', read:'미루'},
+                {id:'n5_4', jp:'大きい', furi:'おおきい', ko:'크다', read:'오오키이'},
+                {id:'n5_5', jp:'新しい', furi:'あたらしい', ko:'새롭다', read:'아타라시이'}
+            ],
+            N4: [
+                {id:'n4_1', jp:'準備', furi:'じゅんび', ko:'준비', read:'준비'},
+                {id:'n4_2', jp:'約束', furi:'やくそく', ko:'약속', read:'야쿠소쿠'},
+                {id:'n4_3', jp:'経験', furi:'けいけん', ko:'경험', read:'케이켄'},
+                {id:'n4_4', jp:'必要', furi:'ひつよう', ko:'필요', read:'히츠요우'},
+                {id:'n4_5', jp:'説明する', furi:'せつめいする', ko:'설명하다', read:'세츠메이스루'}
+            ],
+            N3: [
+                {id:'n3_1', jp:'確認', furi:'かくにん', ko:'확인', read:'카쿠닌'},
+                {id:'n3_2', jp:'解決', furi:'かいけつ', ko:'해결', read:'카이케츠'},
+                {id:'n3_3', jp:'影響', furi:'えいきょう', ko:'영향', read:'에이쿄우'},
+                {id:'n3_4', jp:'環境', furi:'かんきょう', ko:'환경', read:'칸쿄우'},
+                {id:'n3_5', jp:'努力', furi:'どりょく', ko:'노력', read:'도료쿠'}
+            ]
+        };
+
+        let currentLevel = 'N5';
+        let cardIndex = 0;
+        let memorizedSet = new Set(JSON.parse(localStorage.getItem('nihongo_memorized') || '[]'));
+
+        function updateProgress() {
+            const total = vocabDB.N5.length + vocabDB.N4.length + vocabDB.N3.length;
+            const pct = Math.round((memorizedSet.size / total) * 100);
+            document.getElementById('progress-text').innerText = pct + '%';
+            document.getElementById('progress-fill').style.width = pct + '%';
+        }
+
+        function switchLevel(lvl, el) {
+            document.querySelectorAll('#card-section .tab-btn').forEach(b => b.classList.remove('active'));
+            el.classList.add('active');
+            currentLevel = lvl;
+            cardIndex = 0;
+            loadCard();
+        }
+
+        function loadCard() {
+            const list = vocabDB[currentLevel];
+            const card = list[cardIndex];
+            document.getElementById('card-jp').innerText = card.jp;
+            document.getElementById('card-furigana').innerText = card.furi;
+            document.getElementById('card-ko').innerText = card.ko;
+            document.getElementById('card-reading').innerText = card.read;
+            document.getElementById('flashcard').classList.remove('flipped');
+        }
+
+        function flipCard() {
+            document.getElementById('flashcard').classList.toggle('flipped');
+        }
+
+        function speakCurrentCard() {
+            const card = vocabDB[currentLevel][cardIndex];
+            speak(card.furi);
+        }
+
+        function nextCard(isMemorized) {
+            const list = vocabDB[currentLevel];
+            const card = list[cardIndex];
+            if (isMemorized) {
+                memorizedSet.add(card.id);
+                localStorage.setItem('nihongo_memorized', JSON.stringify([...memorizedSet]));
+                updateProgress();
+            }
+            cardIndex = (cardIndex + 1) % list.length;
+            loadCard();
+        }
+
+        // 퀴즈 로직
+        const quizPool = [
+            {q: '「食べる」의 올바른 읽기와 뜻은?', opts: ['たべる (먹다)', 'のむ (마시다)', 'みる (보다)', 'いく (가다)'], ans: 0},
+            {q: '「約束」의 읽기는 무엇일까요?', opts: ['じゅんび', 'やくそく', 'けいけん', 'ひつよう'], ans: 1},
+            {q: '「確認」의 한국어 뜻은?', opts: ['해결', '노력', '확인', '환경'], ans: 2},
+            {q: '가타카나 「シ」의 발음은?', opts: ['tsu (츠)', 'so (소)', 'n (응)', 'shi (시)'], ans: 3},
+            {q: '「新しい」의 뜻은 무엇일까요?', opts: ['크다', '작다', '새롭다', '오래되다'], ans: 2}
+        ];
+        let qIdx = 0, qScore = 0, qAnswered = false;
+
+        function initQuiz() {
+            qIdx = 0; qScore = 0;
+            renderQuiz();
+        }
+
+        function renderQuiz() {
+            qAnswered = false;
+            const item = quizPool[qIdx];
+            document.getElementById('quiz-counter').innerText = `문제 ${qIdx + 1} / ${quizPool.length}`;
+            document.getElementById('quiz-score').innerText = `점수: ${qScore}`;
+            document.getElementById('quiz-question').innerText = item.q;
+            document.getElementById('quiz-feedback').innerText = '';
+            document.getElementById('quiz-next-btn').style.display = 'none';
+
+            const optDiv = document.getElementById('quiz-options');
+            optDiv.innerHTML = '';
+            item.opts.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'quiz-option';
+                btn.innerText = opt;
+                btn.onclick = () => checkAnswer(idx, btn);
+                optDiv.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(selectedIdx, btnEl) {
+            if (qAnswered) return;
+            qAnswered = true;
+            const item = quizPool[qIdx];
+            const buttons = document.querySelectorAll('.quiz-option');
+
+            if (selectedIdx === item.ans) {
+                btnEl.classList.add('correct');
+                qScore += 20;
+                document.getElementById('quiz-score').innerText = `점수: ${qScore}`;
+                document.getElementById('quiz-feedback').innerText = '정답입니다! 🎉';
+                document.getElementById('quiz-feedback').style.color = 'var(--success)';
+            } else {
+                btnEl.classList.add('wrong');
+                buttons[item.ans].classList.add('correct');
+                document.getElementById('quiz-feedback').innerText = '오답입니다. 정답을 확인해 보세요.';
+                document.getElementById('quiz-feedback').style.color = 'var(--danger)';
+            }
+            document.getElementById('quiz-next-btn').style.display = 'block';
+        }
+
+        function nextQuiz() {
+            qIdx++;
+            if (qIdx >= quizPool.length) {
+                alert(`퀴즈 완료! 최종 점수: ${qScore}점`);
+                initQuiz();
+            } else {
+                renderQuiz();
+            }
+        }
+
+        // 초기 실행
+        renderKana('hira');
+        loadCard();
+        updateProgress();
+    </script>
+</body>
+</html>
